@@ -14,6 +14,10 @@
 
         crateName = "fractals";
 
+        packageBuildInputs = with pkgs; [
+          SDL2
+        ];
+
         inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
           generatedCargoNix;
 
@@ -23,21 +27,8 @@
         }) {
           inherit pkgs;
           defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            alsa-sys = attrs: {
-              nativeBuildInputs = [
-                pkgs.pkg-config
-              ];
-              buildInputs = [
-                pkgs.alsa-lib.dev
-              ];
-            };
-            libudev-sys = attrs: {
-              nativeBuildInputs = [
-                pkgs.pkg-config
-              ];
-              buildInputs = [
-                pkgs.systemd.dev
-              ];
+            ${crateName} = attrs: {
+              buildInputs = packageBuildInputs;
             };
           };
         };
@@ -51,7 +42,7 @@
             vulkan-loader
             libxkbcommon
           ])}"
-            export RUST_SRC_PATH = ${pkgs.rust.packages.stable.rustPlatform.rustLibSrc};
+            export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc};
           '';
           inputsFrom = builtins.attrValues self.packages.${system};
           nativeBuildInputs = with pkgs; [
@@ -59,11 +50,9 @@
             rust-analyzer
             clippy
             pkg-config
-            alsa-lib.dev
-            systemd.dev
-
-            SDL2
           ];
+
+          buildInputs = packageBuildInputs;
         };
       });
 }
