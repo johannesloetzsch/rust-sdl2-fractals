@@ -10,24 +10,28 @@ pub fn main() {
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
-    let window = match (video_subsystem.window("fractals", 800, 600)
+    let window = match video_subsystem.window("fractals", 800, 600)
         .position_centered()
-        .build()) {
+        .build() {
             Ok(w) => { w },
             Err(_)  => { panic!("Can not build window!") }
         };
 
     let mut canvas = window.into_canvas().build().unwrap();
 
-    canvas.set_draw_color(Color::RGB(0, 255, 255));
-    canvas.clear();
-    canvas.present();
-
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut i = 0;
+    let mut flip = true;
 
     'running: loop {
-        i = (i + 1) % 255;
+        if i % 255 == 0 {
+            flip = !flip;
+        }
+        if flip && i > 0 {
+            i = i - 1;
+        } else {
+            i = i + 1;
+        }
         canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
         canvas.clear();
         for event in event_pump.poll_iter() {
@@ -41,6 +45,6 @@ pub fn main() {
         }
 
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000 / 60));
+        ::std::thread::sleep(Duration::from_millis(1000 / 60));
     }
 }
