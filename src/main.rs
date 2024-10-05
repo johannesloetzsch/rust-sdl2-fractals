@@ -8,12 +8,14 @@ use std::time::Duration;
 pub fn main() {
     println!("Hello, world!");
     let sdl_context = sdl2::init().unwrap();
-    let vide_subsystem = sdl_context.video().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
 
-    let window = vide_subsystem.window("fractals", 800, 600)
+    let window = match (video_subsystem.window("fractals", 800, 600)
         .position_centered()
-        .build()
-        .unwrap();
+        .build()) {
+            Ok(w) => { w },
+            Err(_)  => { panic!("Can not build window!") }
+        };
 
     let mut canvas = window.into_canvas().build().unwrap();
 
