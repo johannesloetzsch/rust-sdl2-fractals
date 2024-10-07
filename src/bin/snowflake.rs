@@ -75,7 +75,7 @@ fn main() -> Result<(), String> {
     let video_subsys = sdl_context.video()?;
     let window = video_subsys
         .window(
-            "rust-sdl2_gfx: draw line & FPSManager",
+            "Koch Snowflake",
             (SCREEN_WIDTH as u16).into(),
             (SCREEN_HEIGHT as u16).into(),
         )

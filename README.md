@@ -1,4 +1,21 @@
-## rust-sdl2-fractals
+# rust-sdl2-fractals
 
-[![mandelbrot](./examples/mandelbrot.png?raw=true)](https://en.wikipedia.org/wiki/Mandelbrot_set)
-[![snowflake](./examples/snowflake.png?raw=true)](https://en.wikipedia.org/wiki/Koch_snowflake)
+## Usage
+
+``` bash
+nix run github:johannesloetzsch/rust-sdl2-fractals
+## or
+cargo run
+```
+
+### [Mandelbrot set](https://en.wikipedia.org/wiki/Mandelbrot_set)
+![mandelbrot](./examples/mandelbrot.png?raw=true)
+``` bash
+cargo run --bin mandelbrot
+```
+
+### [Koch Snowflake](https://en.wikipedia.org/wiki/Koch_snowflake)
+![snowflake](./examples/snowflake.png?raw=true)
+``` bash
+cargo run --bin snowflake
+```
