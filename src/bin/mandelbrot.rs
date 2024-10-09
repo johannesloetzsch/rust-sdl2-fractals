@@ -7,10 +7,12 @@ use num::complex::{Complex, Complex32, ComplexFloat};
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::libc::KERN_PTY;
 use sdl2::pixels::{self, Color};
 
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::render::WindowCanvas;
+use sdl2::video::FullscreenType;
 
 fn bound(n: f32, min: f32, max: f32) -> f32 {
     let mut vals = [min, n, max];
@@ -131,7 +133,7 @@ impl Mandelbrot {
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
-    let window = video_subsys
+    let mut window = video_subsys
         .window(
             "Mandelbrot set",
             (SCREEN_WIDTH as u16).into(),
@@ -142,7 +144,7 @@ fn main() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
 
-    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+    let mut canvas = window.clone().into_canvas().build().map_err(|e| e.to_string())?;
 
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.clear();
@@ -179,6 +181,12 @@ fn main() -> Result<(), String> {
                         mandelbrot.iter();
                     } else if keycode == Keycode::BACKSPACE {
                         mandelbrot.show_projections(&mut canvas);
+                    } else if keycode == Keycode::F11 {
+                        if window.fullscreen_state() == FullscreenType::Off {
+                          let _ = window.set_fullscreen(FullscreenType::True);
+                        } else {
+                          let _ = window.set_fullscreen(FullscreenType::Off);
+                        }
                     }
                 }
 
