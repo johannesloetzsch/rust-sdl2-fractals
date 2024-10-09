@@ -7,7 +7,6 @@ use num::complex::{Complex, Complex32, ComplexFloat};
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::libc::KERN_PTY;
 use sdl2::pixels::{self, Color};
 
 use sdl2::gfx::primitives::DrawRenderer;
@@ -193,16 +192,19 @@ fn main() -> Result<(), String> {
                 Event::MouseButtonDown { x, y, .. } => {
                     mandelbrot.debug(x.try_into().unwrap(), y.try_into().unwrap());
                 }
+
                 Event::Window { timestamp: _, window_id: _, win_event } => {
                     match win_event {
                         sdl2::event::WindowEvent::Resized(w, h) => {
-                            let _ = canvas.window_mut().set_size(w.try_into().unwrap(), h.try_into().unwrap());
+                            canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+                            canvas.clear();
+                            canvas.present();
                             let old_iter = mandelbrot.iteration;
                             mandelbrot = Mandelbrot::new(w as usize, h as usize);
                             for _ in 0..old_iter {
                                 mandelbrot.iter();
+                                mandelbrot.show_projections(&mut canvas);
                             }
-                            mandelbrot.show_projections(&mut canvas);
                         }
                         _ => {}
                     }
