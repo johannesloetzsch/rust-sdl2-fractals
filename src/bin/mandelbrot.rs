@@ -7,9 +7,10 @@ use num::complex::{Complex, Complex32, ComplexFloat};
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{self, Color};
+use sdl2::pixels::{self, Color, PixelFormatEnum};
 
 use sdl2::gfx::primitives::DrawRenderer;
+use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
 use sdl2::video::FullscreenType;
 
@@ -186,6 +187,36 @@ fn main() -> Result<(), String> {
                         } else {
                           let _ = canvas.window_mut().set_fullscreen(FullscreenType::Off);
                         }
+                    } else if keycode == Keycode::TAB {
+                        let texture_creator = canvas.texture_creator();
+
+                        let mut texture = texture_creator
+                            .create_texture_streaming(PixelFormatEnum::RGB24, 256, 256)
+                            .map_err(|e| e.to_string())?;
+                        // Create a red-green gradient
+                        texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                            for y in 0..256 {
+                                for x in 0..256 {
+                                    let offset = y * pitch + x * 3;
+                                    buffer[offset] = x as u8;
+                                    buffer[offset + 1] = y as u8;
+                                    buffer[offset + 2] = 0;
+                                }
+                            }
+                        })?;
+                        
+                        canvas.clear();
+                        canvas.copy(&texture, None, Some(Rect::new(100, 100, 256, 256)))?;
+                        canvas.copy_ex(
+                            &texture,
+                            None,
+                            Some(Rect::new(450, 100, 256, 256)),
+                            30.0,
+                            None,
+                            false,
+                            false,
+                        )?;
+                        canvas.present();
                     }
                 }
 

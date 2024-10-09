@@ -17,6 +17,7 @@
         packageBuildInputs = with pkgs; [
           SDL2
           SDL2_gfx
+          SDL2_ttf
         ];
 
         inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
