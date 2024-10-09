@@ -8,4 +8,5 @@ default-run = "mandelbrot"
 
 [dependencies]
 num = "0.4.3"
+rayon = "1.10.0"
 sdl2 = { version = "0.37", features = ["gfx"] }

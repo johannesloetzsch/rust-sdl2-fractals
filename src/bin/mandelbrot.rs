@@ -1,5 +1,7 @@
 extern crate sdl2;
 
+use rayon::prelude::*;
+
 use core::f32;
 use std::i32;
 
@@ -75,19 +77,21 @@ impl Mandelbrot {
         self.iteration += 1;
         println!("iteration={}", self.iteration);
 
-        let projections = &mut self.projections;
-        let divergence = &mut self.divergence;
-        for y in 0..projections.len() {
-            for x in 0..projections[y].len() {
-                if divergence[y][x] > self.iteration {
-                    projections[y][x] = projections[y][x] * projections[y][x] + self.cs[y][x];
-
-                    if projections[y][x].abs().is_nan() {  // or greater bounds
-                        divergence[y][x] = self.iteration;
-                    }
+        (self.projections, self.divergence) = (0..self.height).into_par_iter().map(|y| {
+            (0..self.width).map(|x| {
+                if self.divergence[y][x] < self.iteration {
+                    (self.projections[y][x], self.divergence[y][x])
+                } else {
+                    let p = self.projections[y][x]*self.projections[y][x] + self.cs[y][x];
+                    let d = if self.projections[y][x].abs().is_nan() {  // or greater bounds
+                                self.iteration
+                            } else {
+                                self.divergence[y][x]
+                            };
+                    (p, d)
                 }
-            }
-        }
+            }).collect::<(Vec<Complex32>, Vec<i32>)>()
+        }).collect::<(Vec<Vec<Complex32>>, Vec<Vec<i32>>)>();
     }
 
     fn show_divergence<'a>(&self, canvas: &'a mut WindowCanvas) {
