@@ -29,19 +29,14 @@ fn norm_u8(n: f32, min: f32, max: f32) -> u8 {
     (255.0 * norm(n, min, max)) as u8
 }
 
-const SCREEN_WIDTH: i16 = 800;
-const SCREEN_HEIGHT: i16 = 600;
-const WIDTH: usize = SCREEN_WIDTH as usize;
-const HEIGHT: usize = SCREEN_HEIGHT as usize;
-
-fn xy2complex(x: f32, y: f32) -> Complex32 {
+fn xy2complex(x: f32, y: f32, w: usize, h: usize) -> Complex32 {
     let x_min = -2.0;
     let x_max = 1.0;
     let y_min = -2.0;
     let y_max = 2.0;
 
-    Complex::new(x_min + (x_max-x_min) * x / WIDTH as f32,
-                 -(y_min + (y_max-y_min) * y / HEIGHT as f32))
+    Complex::new(x_min + (x_max-x_min) * x / w as f32,
+                 -(y_min + (y_max-y_min) * y / h as f32))
 }
 
 pub struct Mandelbrot {
@@ -49,17 +44,19 @@ pub struct Mandelbrot {
     pub projections: Vec<Vec<Complex<f32>>>,
     pub cs: Vec<Vec<Complex32>>,
     pub iteration: i32,
+    pub width: usize,
+    pub height:usize,
 }
 
 impl Mandelbrot {
-    fn new() -> Mandelbrot {
-        let divergence = vec![vec![i32::MAX; WIDTH]; HEIGHT];
-        let projections = vec![vec![Complex::new(0.0,0.0); WIDTH]; HEIGHT];
-        let mut cs = vec![vec![Complex::new(0.0,0.0); WIDTH]; HEIGHT];
+    fn new(width: usize, height: usize) -> Mandelbrot {
+        let divergence = vec![vec![i32::MAX; width]; height];
+        let projections = vec![vec![Complex::new(0.0,0.0); width]; height];
+        let mut cs = vec![vec![Complex::new(0.0,0.0); width]; height];
 
         for y in 0..cs.len() {
             for x in 0..cs[y].len() {
-                cs[y][x] = xy2complex((x as i16).into(), (y as i16).into());
+                cs[y][x] = xy2complex((x as i16).into(), (y as i16).into(), width, height);
             }
         }
 
@@ -70,6 +67,8 @@ impl Mandelbrot {
             projections,
             cs,
             iteration,
+            width,
+            height
         }
     }
 
@@ -133,24 +132,25 @@ impl Mandelbrot {
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
-    let mut window = video_subsys
+    let window = video_subsys
         .window(
             "Mandelbrot set",
-            (SCREEN_WIDTH as u16).into(),
-            (SCREEN_HEIGHT as u16).into(),
+            800,
+            600,
         )
+        .resizable()
         .position_centered()
         .opengl()
         .build()
         .map_err(|e| e.to_string())?;
 
-    let mut canvas = window.clone().into_canvas().build().map_err(|e| e.to_string())?;
+    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
     canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
 
-    let mut mandelbrot = Mandelbrot::new();
+    let mut mandelbrot = Mandelbrot::new(800, 600);
 
     let mut events = sdl_context.event_pump()?;
 
@@ -182,16 +182,30 @@ fn main() -> Result<(), String> {
                     } else if keycode == Keycode::BACKSPACE {
                         mandelbrot.show_projections(&mut canvas);
                     } else if keycode == Keycode::F11 {
-                        if window.fullscreen_state() == FullscreenType::Off {
-                          let _ = window.set_fullscreen(FullscreenType::True);
+                        if canvas.window().fullscreen_state() == FullscreenType::Off {
+                          let _ = canvas.window_mut().set_fullscreen(FullscreenType::Desktop);
                         } else {
-                          let _ = window.set_fullscreen(FullscreenType::Off);
+                          let _ = canvas.window_mut().set_fullscreen(FullscreenType::Off);
                         }
                     }
                 }
 
                 Event::MouseButtonDown { x, y, .. } => {
                     mandelbrot.debug(x.try_into().unwrap(), y.try_into().unwrap());
+                }
+                Event::Window { timestamp: _, window_id: _, win_event } => {
+                    match win_event {
+                        sdl2::event::WindowEvent::Resized(w, h) => {
+                            let _ = canvas.window_mut().set_size(w.try_into().unwrap(), h.try_into().unwrap());
+                            let old_iter = mandelbrot.iteration;
+                            mandelbrot = Mandelbrot::new(w as usize, h as usize);
+                            for _ in 0..old_iter {
+                                mandelbrot.iter();
+                            }
+                            mandelbrot.show_projections(&mut canvas);
+                        }
+                        _ => {}
+                    }
                 }
                 _ => {}
             }
