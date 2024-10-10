@@ -5,11 +5,12 @@
 ``` bash
 nix run github:johannesloetzsch/rust-sdl2-fractals
 ## or
-cargo run
+cargo run --release
 ```
 
 ### [Mandelbrot set](https://en.wikipedia.org/wiki/Mandelbrot_set)
 ![mandelbrot](./examples/mandelbrot.png?raw=true)
+![mandelbrot](./examples/mandelbrot_state.png?raw=true)
 ``` bash
 cargo run --bin mandelbrot
 ```

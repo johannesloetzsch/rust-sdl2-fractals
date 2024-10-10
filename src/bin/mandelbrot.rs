@@ -2,6 +2,7 @@ extern crate sdl2;
 
 use rayon::prelude::*;
 
+use num::Float;
 use core::f32;
 use std::i32;
 
@@ -32,9 +33,9 @@ fn norm_u8(n: f32, min: f32, max: f32) -> u8 {
 
 fn xy2complex(x: f32, y: f32, w: usize, h: usize) -> Complex32 {
     let x_min = -2.0;
-    let x_max = 1.0;
-    let y_min = -2.0;
-    let y_max = 2.0;
+    let x_max = 0.55;
+    let y_min = -1.2;
+    let y_max = 1.2;
 
     Complex::new(x_min + (x_max-x_min) * x / w as f32,
                  -(y_min + (y_max-y_min) * y / h as f32))
@@ -99,9 +100,9 @@ impl Mandelbrot {
         for y in 0..values.len() {
             for x in 0..values[y].len() {
                 let v = values[y][x];
-                let r = norm_u8(0.0 - v.abs_diff(20) as f32, -10.0, 10.0);
-                let g = norm_u8(0.0 - v.abs_diff(30) as f32, -10.0, 10.0);
-                let b = norm_u8(v as f32, 0.0, 50.0);
+                let r = norm_u8(0.0 - v.abs_diff(20) as f32, -10.0, 20.0);
+                let g = norm_u8(0.0 - v.abs_diff(30) as f32, -15.0, 15.0);
+                let b = norm_u8(0.0 - v.abs_diff(40) as f32, -20.0, 10.0);
                 let color = Color::RGB(r, g, b);
                 let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
             }
@@ -114,9 +115,10 @@ impl Mandelbrot {
         for y in 0..values.len() {
             for x in 0..values[y].len() {
                 let v = values[y][x];
-                let im = norm_u8(v.im, -2.0, 2.0);
-                let re = norm_u8(v.re, -2.0, 2.0);
-                let color = Color::RGB(0, re, im);
+                let im = norm_u8(v.im.abs(), 0.0, 2.0);
+                let re = norm_u8(v.re.abs(), 0.0, 2.0);
+                let pos = norm_u8((v+Complex::new(2.0, 2.0)).abs(), Float::sqrt(8.0), Float::sqrt(32.0));  // how close to (2;2)
+                let color = Color::RGB(pos, im, re);
                 let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
             }
         }
