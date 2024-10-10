@@ -1,8 +1,8 @@
 extern crate sdl2;
 
+use fractals::coloring::gradient::gradient_rgb;
 use rayon::prelude::*;
 
-use num::Float;
 use core::f32;
 use std::i32;
 
@@ -10,26 +10,13 @@ use num::complex::{Complex, Complex32, ComplexFloat};
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{self, Color};
+use sdl2::pixels::Color;
 
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::render::WindowCanvas;
 use sdl2::video::FullscreenType;
 
-fn bound(n: f32, min: f32, max: f32) -> f32 {
-    let mut vals = [min, n, max];
-    vals.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-    vals[1]
-}
-
-fn norm(n: f32, min: f32, max: f32) -> f32 {
-    let n_bound = bound(n, min, max);
-    (n_bound-min) / (max-min)
-}
-
-fn norm_u8(n: f32, min: f32, max: f32) -> u8 {
-    (255.0 * norm(n, min, max)) as u8
-}
+use fractals::coloring::domain_coloring::domain_coloring;
 
 fn xy2complex(x: f32, y: f32, w: usize, h: usize) -> Complex32 {
     let x_min = -2.0;
@@ -96,30 +83,20 @@ impl Mandelbrot {
     }
 
     fn show_divergence<'a>(&self, canvas: &'a mut WindowCanvas) {
-        let values = &self.divergence;
-        for y in 0..values.len() {
-            for x in 0..values[y].len() {
-                let v = values[y][x];
-                let r = norm_u8(0.0 - v.abs_diff(20) as f32, -10.0, 20.0);
-                let g = norm_u8(0.0 - v.abs_diff(30) as f32, -15.0, 15.0);
-                let b = norm_u8(0.0 - v.abs_diff(40) as f32, -20.0, 10.0);
-                let color = Color::RGB(r, g, b);
-                let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let color = gradient_rgb(self.divergence[y][x]);
+                let _ = canvas.pixel(x as i16, y as i16, color);
             }
         }
         canvas.present();
     }
 
     fn show_projections<'a>(&self, canvas: &'a mut WindowCanvas) {
-        let values = &self.projections;
-        for y in 0..values.len() {
-            for x in 0..values[y].len() {
-                let v = values[y][x];
-                let im = norm_u8(v.im.abs(), 0.0, 2.0);
-                let re = norm_u8(v.re.abs(), 0.0, 2.0);
-                let pos = norm_u8((v+Complex::new(2.0, 2.0)).abs(), Float::sqrt(8.0), Float::sqrt(32.0));  // how close to (2;2)
-                let color = Color::RGB(pos, im, re);
-                let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let color = domain_coloring(self.projections[y][x], 2.0);
+                let _ = canvas.pixel(x as i16, y as i16, color);
             }
         }
         canvas.present();
@@ -129,19 +106,11 @@ impl Mandelbrot {
         for y in 0..self.height {
             for x in 0..self.width {
                 if self.divergence[y][x] < self.iteration {
-                    let v = self.divergence[y][x];
-                    let r = norm_u8(0.0 - v.abs_diff(20) as f32, -10.0, 20.0);
-                    let g = norm_u8(0.0 - v.abs_diff(30) as f32, -15.0, 15.0);
-                    let b = norm_u8(0.0 - v.abs_diff(40) as f32, -20.0, 10.0);
-                    let color = Color::RGB(r, g, b);
-                    let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+                    let color = gradient_rgb(self.divergence[y][x]);
+                    let _ = canvas.pixel(x as i16, y as i16, color);
                 } else {
-                    let v = self.projections[y][x];
-                    let im = norm_u8(v.im.abs(), 0.0, 2.0);
-                    let re = norm_u8(v.re.abs(), 0.0, 2.0);
-                    let pos = norm_u8((v+Complex::new(2.0, 2.0)).abs(), Float::sqrt(8.0), Float::sqrt(32.0));  // how close to (2;2)
-                    let color = Color::RGB(pos, im, re);
-                    let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+                    let color = domain_coloring(self.projections[y][x], 2.0);
+                    let _ = canvas.pixel(x as i16, y as i16, color);
                 }
             }
         }
@@ -174,7 +143,7 @@ fn main() -> Result<(), String> {
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
-    canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
     canvas.present();
 
@@ -228,7 +197,7 @@ fn main() -> Result<(), String> {
                 Event::Window { timestamp: _, window_id: _, win_event } => {
                     match win_event {
                         sdl2::event::WindowEvent::Resized(w, h) => {
-                            canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+                            canvas.set_draw_color(Color::RGB(0, 0, 0));
                             canvas.clear();
                             canvas.present();
                             let old_iter = mandelbrot.iteration;
