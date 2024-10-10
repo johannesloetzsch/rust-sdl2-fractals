@@ -125,6 +125,29 @@ impl Mandelbrot {
         canvas.present();
     }
 
+    fn show_combination<'a>(&self, canvas: &'a mut WindowCanvas) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if self.divergence[y][x] < self.iteration {
+                    let v = self.divergence[y][x];
+                    let r = norm_u8(0.0 - v.abs_diff(20) as f32, -10.0, 20.0);
+                    let g = norm_u8(0.0 - v.abs_diff(30) as f32, -15.0, 15.0);
+                    let b = norm_u8(0.0 - v.abs_diff(40) as f32, -20.0, 10.0);
+                    let color = Color::RGB(r, g, b);
+                    let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+                } else {
+                    let v = self.projections[y][x];
+                    let im = norm_u8(v.im.abs(), 0.0, 2.0);
+                    let re = norm_u8(v.re.abs(), 0.0, 2.0);
+                    let pos = norm_u8((v+Complex::new(2.0, 2.0)).abs(), Float::sqrt(8.0), Float::sqrt(32.0));  // how close to (2;2)
+                    let color = Color::RGB(pos, im, re);
+                    let _ = canvas.box_(x as i16, y as i16, x as i16, y as i16, color);
+                }
+            }
+        }
+        canvas.present();
+    }
+
     fn debug(&self, x: usize, y: usize) {
         println!("");
         println!("y={}, x={}, c={}", y, x, self.cs[y][x]);  // xy2complex((x as i16).into(), (y as i16).into())
@@ -159,8 +182,10 @@ fn main() -> Result<(), String> {
 
     let mut events = sdl_context.event_pump()?;
 
-    println!("Press [Space] to show next iteration (projections)…");
-    println!("Press [Enter] to show next iteration (divergence)…");
+    println!("Press [Space] to show next iteration…");
+    println!("Press [Enter] to show state Z of next iteration…");
+    println!("Press [Backspace] to show divergence d of next iteration…");
+    println!("Press [F11] to toggle fullscreen…");
     println!("[Klick] any coordinate for debug output…");
     
     mandelbrot.iter();
@@ -180,12 +205,13 @@ fn main() -> Result<(), String> {
                         break 'main;
                     } else if keycode == Keycode::SPACE {
                         mandelbrot.iter();
-                        mandelbrot.show_projections(&mut canvas);
+                        mandelbrot.show_combination(&mut canvas);
                     } else if keycode == Keycode::RETURN {
-                        mandelbrot.show_divergence(&mut canvas);
                         mandelbrot.iter();
-                    } else if keycode == Keycode::BACKSPACE {
                         mandelbrot.show_projections(&mut canvas);
+                    } else if keycode == Keycode::BACKSPACE {
+                        mandelbrot.iter();
+                        mandelbrot.show_divergence(&mut canvas);
                     } else if keycode == Keycode::F11 {
                         if canvas.window().fullscreen_state() == FullscreenType::Off {
                           let _ = canvas.window_mut().set_fullscreen(FullscreenType::Desktop);
@@ -209,7 +235,7 @@ fn main() -> Result<(), String> {
                             mandelbrot = Mandelbrot::new(w as usize, h as usize);
                             for _ in 0..old_iter {
                                 mandelbrot.iter();
-                                mandelbrot.show_projections(&mut canvas);
+                                mandelbrot.show_combination(&mut canvas);
                             }
                         }
                         _ => {}
