@@ -1,6 +1,5 @@
 use num::complex::{Complex32, ComplexFloat};
 use rayon::prelude::*;
-use std::time::Instant;
 use super::dynamic::HolomorphicDynamic;
 
 
@@ -22,7 +21,7 @@ const BOUND: f32 = 1.0e10;
 
 pub trait Simulation {
     fn step(&mut self);
-    fn benchmark(&mut self, iterations: i32);
+    fn steps(&mut self, iterations: i32);
 }
 
 impl Simulation for HolomorphicDynamic {
@@ -48,13 +47,10 @@ impl Simulation for HolomorphicDynamic {
         }).collect::<(Vec<Vec<Complex32>>, Vec<Vec<i32>>)>();
     }
 
-   fn benchmark(&mut self, iterations: i32) {
-       println!("Benchmarking {} iterations…", iterations);
-       let start = Instant::now();
+   fn steps(&mut self, iterations: i32) {
        for _ in 0..iterations {
            self.step()
        }
-       println!("Simulating {} iterations took {}s", iterations, start.elapsed().as_secs());
     }
 }
 

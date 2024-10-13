@@ -43,7 +43,6 @@ fn main() -> Result<(), String> {
     println!("Press [Enter] ([F2] or [2]) to show divergence of next iteration…");
     println!("Press [F11] to toggle fullscreen…");
     println!("[Klick] any coordinate for debug output…");
-    println!("Press [End] to run a benchmark…");
     println!("Press [Esc] to quit…");
 
     let mut mandelbrot = {
@@ -109,10 +108,6 @@ fn main() -> Result<(), String> {
                 } else if keycode == Keycode::RETURN {
                     active_dynamic.borrow_mut().step();
                     active_dynamic.borrow().visualize_d(&mut canvas);
-
-                } else if keycode == Keycode::END {
-                    active_dynamic.borrow_mut().benchmark(10_000);
-                    active_dynamic.borrow().visualize_z(&mut canvas);
                 }
             }
 
